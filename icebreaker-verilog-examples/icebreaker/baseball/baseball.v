@@ -21,7 +21,7 @@ module top (
     reg clear_button ;
 
 	reg [2:0] ball_counter ;
-	reg [1:0] stike_counter ;
+	reg [1:0] strike_counter ;
 
     reg CLK_slow;
 
@@ -34,26 +34,30 @@ module top (
     reg inc_strike;
     reg inc_ball;
     reg clear_all;
+    
+    wire one_button_was_pressed;
 
-    always @(posedge CLK_slow) clear_all = (stike_counter == 3) && (strike_button) || (ball_counter == 2) && (ball_button) || clear_button;
-    always @(posedge CLK_slow) inc_strike = (stike_counter < 3) && strike_button;
-    always @(posedge CLK_slow) inc_ball = (ball_counter < 2) && ball_button;
+    always @(posedge CLK_slow) clear_all = (strike_counter == 3) && (strike_button) || (ball_counter == 7) && (ball_button) || clear_button;
+    always @(posedge CLK_slow) inc_strike = (strike_counter < 3) && strike_button;
+    always @(posedge CLK_slow) inc_ball = (ball_counter < 7) && ball_button;
 
-    always @(posedge CLK_slow)
+    assign one_button_was_pressed = clear_all || inc_strike || inc_ball;
+
+    always @(posedge one_button_was_pressed)
     begin
         if (clear_all)
         begin
-            stike_counter <= 0;
+            strike_counter <= 0;
             ball_counter <= 0;
         end
         else
             if (inc_strike) 
-                stike_counter <= (stike_counter << 1) + 1;
+                strike_counter <= (strike_counter << 1) + 1;
             if (inc_ball)
                 ball_counter <= (ball_counter << 1) + 1;
     end
 
     assign {LED1, LED2, LED3} = ball_counter;
-    assign {LED4, LED5} = stike_counter;
+    assign {LED4, LED5} = strike_counter;
 
 endmodule

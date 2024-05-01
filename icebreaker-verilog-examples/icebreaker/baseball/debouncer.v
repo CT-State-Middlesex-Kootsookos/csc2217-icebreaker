@@ -3,8 +3,9 @@ module debounce(
     input wire IN,
     output reg OUT
 );
- parameter M = 28;
- reg [M:0]shift;
+
+ parameter M = 26;
+ reg [M:0] shift;
  //shift: wait for stable
  always @ (posedge clock) 
  begin
