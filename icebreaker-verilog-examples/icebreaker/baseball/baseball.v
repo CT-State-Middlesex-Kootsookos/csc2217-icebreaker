@@ -1,6 +1,7 @@
 /* Attempt to implement baseball counter. */
 
 `include "debouncer.v"
+`include "slow_clock.v"
 
 module top (
     input CLK,
@@ -15,35 +16,41 @@ module top (
 	input BTN3
 );
 
-    reg[0:0] strike_button ;
-    reg[0:0] ball_button ;
-    reg[0:0] clear_button ;
+    reg strike_button ;
+    reg ball_button ;
+    reg clear_button ;
 
 	reg [2:0] ball_counter ;
 	reg [1:0] stike_counter ;
 
-    wire clear_all;
+    reg CLK_slow;
+
+    slow_clock sc1(CLK, CLK_slow);
 
     debounce db1(CLK, BTN1, strike_button);
     debounce db2(CLK, BTN2, ball_button);
     debounce db3(CLK, BTN3, clear_button);
 
-    assign clear_all = clear_button || (strike_button && (stike_counter == 3)) || (ball_button && ball_counter == 7);
+    reg inc_strike;
+    reg inc_ball;
+    reg clear_all;
 
-    always @(posedge strike_button)
+    always @(posedge CLK_slow) clear_all = (stike_counter == 3) && (strike_button) || (ball_counter == 2) && (ball_button) || clear_button;
+    always @(posedge CLK_slow) inc_strike = (stike_counter < 3) && strike_button;
+    always @(posedge CLK_slow) inc_ball = (ball_counter < 2) && ball_button;
+
+    always @(posedge CLK_slow)
     begin
-        if (stike_counter == 3 || clear_all == 1)
+        if (clear_all)
+        begin
             stike_counter <= 0;
-        else
-            stike_counter <= (stike_counter << 1) + 1;
-    end
-
-    always @(posedge ball_button)
-    begin
-        if (ball_counter == 7 || clear_all == 1)
             ball_counter <= 0;
+        end
         else
-            ball_counter <= (ball_counter << 1) + 1;
+            if (inc_strike) 
+                stike_counter <= (stike_counter << 1) + 1;
+            if (inc_ball)
+                ball_counter <= (ball_counter << 1) + 1;
     end
 
     assign {LED1, LED2, LED3} = ball_counter;
